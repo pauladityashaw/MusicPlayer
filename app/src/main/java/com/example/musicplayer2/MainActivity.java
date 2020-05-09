@@ -18,6 +18,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import java.io.File;
@@ -81,9 +82,10 @@ public class MainActivity extends AppCompatActivity {
         addMusicFileFrom(String.valueOf(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)));
         addMusicFileFrom(String.valueOf(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)));
     }
-
-    private void playMusicFile(String path) {
-        MediaPlayer mp = new MediaPlayer();
+    private MediaPlayer mp;
+    private boolean musicPlaying = false;
+    private int playMusicFile(String path) {
+        mp = new MediaPlayer();
         try {
             mp.setDataSource(path);
             mp.prepare();
@@ -92,7 +94,11 @@ public class MainActivity extends AppCompatActivity {
         catch(Exception e) {
             e.printStackTrace();
         }
+        return mp.getDuration();
     }
+
+
+    private int songPosition;
 
     @Override
     protected void onResume() {
@@ -109,11 +115,57 @@ public class MainActivity extends AppCompatActivity {
             fillMusicList();
             textAdapter.setData(musicFilesList);
             listview.setAdapter(textAdapter);
+            final SeekBar seekbar = findViewById(R.id.seekBar);
+            seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                int songProgress;
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    songProgress = progress;
+//                    mp.seekTo(songProgress);
+//                    seekBar.setProgress(songProgress);
+                }
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
+
+                }
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+                    mp.seekTo(songProgress);
+//                    seekBar.setProgress(songProgress);
+                }
+            });
             listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    if(musicPlaying) {
+                        mp.stop();
+                    }
                     final String musicFilePath = musicFilesList.get(position);
-                    playMusicFile(musicFilePath);
+                    final int songDuration = playMusicFile(musicFilePath);
+                    musicPlaying = true;
+                    seekbar.setMax(songDuration);
+                    seekbar.setVisibility(View.VISIBLE);
+                    new Thread() {
+                        public void run() {
+                            songPosition = 0;
+                            while(songPosition < songDuration) {
+                                            try {
+                                                Thread.sleep(1000);
+                                            } catch (InterruptedException e) {
+                                                e.printStackTrace();
+                                            }
+                                            songPosition+=1000;
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    seekbar.setProgress(mp.getCurrentPosition());
+                                    }
+                                });
+                            }
+                        }
+                    }.start();
                 }
             });
 

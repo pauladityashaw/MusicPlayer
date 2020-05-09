@@ -11,4 +11,15 @@
     android:id="@+id/listView"
     />
 
+    <SeekBar
+        android:id="@+id/seekBar"
+        android:layout_width="163dp"
+        android:layout_height="179dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/listView"
+        tools:ignore="MissingConstraints" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
